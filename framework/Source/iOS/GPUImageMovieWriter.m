@@ -35,6 +35,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
     BOOL audioEncodingIsFinished, videoEncodingIsFinished;
 
     BOOL isRecording;
+    BOOL allowWriteAudio;
 }
 
 // Movie recording
@@ -278,6 +279,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
         }
     });
     isRecording = YES;
+    allowWriteAudio = NO;
 	//    [assetWriter startSessionAtSourceTime:kCMTimeZero];
 }
 
@@ -322,7 +324,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
 {
     runSynchronouslyOnContextQueue(_movieWriterContext, ^{
         isRecording = NO;
-        
+        allowWriteAudio = NO;
         if (assetWriter.status == AVAssetWriterStatusCompleted || assetWriter.status == AVAssetWriterStatusCancelled || assetWriter.status == AVAssetWriterStatusUnknown)
         {
             if (handler)
@@ -365,7 +367,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
 
 - (void)processAudioBuffer:(CMSampleBufferRef)audioBuffer;
 {
-    if (!isRecording || _paused)
+    if (!isRecording || _paused || !allowWriteAudio)
     {
         return;
     }
@@ -744,6 +746,7 @@ NSString *const kGPUImageColorSwizzlingFragmentShaderString = SHADER_STRING
             
             [assetWriter startSessionAtSourceTime:frameTime];
             startTime = frameTime;
+            allowWriteAudio = YES;
         });
     }
 
